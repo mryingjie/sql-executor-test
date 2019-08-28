@@ -24,7 +24,7 @@ public class TestExcelDataSourceDemo {
         RDBMSDataSourceProperties dataSourceProperties = new RDBMSDataSourceProperties();
         dataSourceProperties.setUrl("jdbc:mysql://localhost:3306/tests?useUnicode=true&characterEncoding=utf8&autoReconnect=true&failOverReadOnly=false&autoReconnect=true&failOverReadOnly=false&serverTimezone=GMT%2B8");
         dataSourceProperties.setUsername("root");
-        dataSourceProperties.setPassword("zheng");
+        dataSourceProperties.setPassword("root");
         dataSourceProperties.setDriverClass("com.mysql.cj.jdbc.Driver");
         dataSourceProperties.setInitialSize(5);
         dataSourceProperties.setTestOnReturn(false);

@@ -24,11 +24,11 @@ public class TestMongoDatasourceDemo {
         // MongoDataSourceProperties mongoDataSourceProperties = new MongoDataSourceProperties();
         // mongoDataSourceProperties.setDbName("test");
         // mongoDataSourceProperties.setServerAddress(
-        //         Arrays.asList(new ServerAddress("10.58.84.178",27017))
+        //         Arrays.asList(new ServerAddress("localhost",27017))
         // );
 
-        // MongoDataSource mongoDataSource = new MongoDataSource("10.58.84.178",27017,"test");
-        MongoDataSource mongoDataSource = new MongoDataSource(Arrays.asList(new ServerAddress("10.58.84.178",27017)),"test");
+        // MongoDataSource mongoDataSource = new MongoDataSource("localhost",27017,"test");
+        MongoDataSource mongoDataSource = new MongoDataSource(Arrays.asList(new ServerAddress("localhost",27017)),"test");
 
         Map<String, Class> schema = new HashMap<>();
         schema.put("年龄", int.class);
