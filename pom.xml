@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <groupId>com.heitaox</groupId>
+    <artifactId>sql-executor-test</artifactId>
+    <version>1.0-SNAPSHOT</version>
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <configuration>
+                    <source>7</source>
+                    <target>7</target>
+                </configuration>
+            </plugin>
+        </plugins>
+    </build>
+
+    <dependencies>
+
+<!-- 以下依赖按需引入，如果只需要关系型数据库或者excel文件数据源只需引入sql-executor-core即可
+      默认引入了mysql的驱动包，如果要使用oracle或其他关系型数据库请引入相应驱动包   -->
+<!-- sql-executor-elasticsearch以及sql-executor-mongo均依赖sql-executor-core ，无需再次依赖-->
+
+
+        <dependency>
+            <groupId>com.heitaox</groupId>
+            <artifactId>sql-executor-core</artifactId>
+            <version>1.0</version>
+        </dependency>
+        <dependency>
+            <groupId>com.heitaox</groupId>
+            <artifactId>sql-executor-elasticsearch</artifactId>
+            <version>1.0</version>
+        </dependency>
+        <dependency>
+            <groupId>com.heitaox</groupId>
+            <artifactId>sql-executor-mongo</artifactId>
+            <version>1.0</version>
+        </dependency>
+    </dependencies>
+
+</project>
