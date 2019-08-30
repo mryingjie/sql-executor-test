@@ -1,6 +1,6 @@
 package com.heitaox.sql.executor.test;
 
-import com.heitaox.sql.executor.source.SQLExecutor;
+import com.heitaox.sql.executor.SQLExecutor;
 import com.heitaox.sql.executor.source.file.ExcelDataSource;
 import com.heitaox.sql.executor.source.nosql.MongoDataSource;
 import com.mongodb.ServerAddress;
