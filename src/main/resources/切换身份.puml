@@ -1,0 +1,608 @@
+plantuml
+@startuml
+actor User
+participant "供应商" as S
+participant "登录服务" as C
+ User -> S: 发起切换身份请求
+activate S
+ S -> S: 校验当前切换身份是否合法
+ S -> C: 发起切换供应商登录身份请求
+activate C
+C->C:更改用户登录信息
+C->C:记录切换身份
+C-->S:返回切换结果
+deactivate C
+ S --> User: 返回切换结果
+ deactivate S
+@enduml
+
+
+
+
+plantuml
+@startuml
+actor User
+participant "登录服务" as C
+participant "供应商" as S
+participant "其他模块" as R
+ User -> C: 发起登录请求
+activate C
+ C -> S: 获取手机号绑定供应商
+activate S
+S --> C: 返回手机号绑定供应商列表
+deactivate S
+ C -> S: 选择列表首个供应商，请求供应商身份列表
+ activate S
+ S-->C: 返回供应商当前身份列表
+ deactivate S
+ C->C :查询手机号上次登录当前供应商身份列表
+ C->C : 判断上次登录身份是否在供应商当前身份列表中
+ C->C : 如果在，则使用上次登录身份，不在则使用接口返回身份组装用户登录信息
+ C->C : 记录本次登录信息
+ C-->User : 生成token返回登录成功
+deactivate C
+User->R : 发起业务请求
+activate R
+R->R: 获取登录携带token换取登录信息（包含当前登录身份）
+R->R: 处理业务请求
+R-->User: 返回处理结果
+deactivate R
+@enduml
+
+
+
+
+
+
+plantuml
+@startuml
+start
+-用户发起身份申请
+-校验申请身份是否合法
+if (判断当前申请身份) then (本地生活供应商)
+  :校验本地生活供应商数据是否合法;
+
+else (实物供应商)
+  :校验实物供应商数据是否合法;
+endif
+-记录申请审核记录
+stop
+@enduml
+
+plantuml
+@startuml
+start
+-用户发起供应商类型变更申请，补充变更所需数据
+if(校验数据是否完整)then(完整)
+   -记录变更申请
+else(不完整)
+-拒绝类型变更申请
+stop
+endif
+-变更身份审批
+
+if (审批结果) then (通过)
+  -将申请数据写入到主表
+  -记录审核人审核时间
+  -记录主表操作记录
+
+else (驳回)
+  -记录驳回原因审核人审核时间等数据
+
+endif
+stop
+@enduml
+
+
+plantuml
+@startuml
+actor BUser as B
+actor OUser as O
+participant 供应商 as S
+participant 登录服务 as C
+ B -> S: 发起身份申请
+activate S
+ S -> S: 校验当前切换身份是否合法
+ S -> C: 发起切换供应商登录身份请求
+activate C
+C->C:更改用户登录信息
+C->C:记录切换身份
+C-->S:返回切换结果
+deactivate C
+ S --> User: 返回切换结果
+ deactivate S
+@enduml
+
+
+plantuml
+@startuml
+actor BUser as B
+participant 供应商 as S
+participant 商品 as C
+ B -> S: 发起删除门店申请
+activate S
+ S -> C: 发起删除门店
+activate C
+ C -> C: 校验能否删除
+C->C:删除商品关联门店
+C-->S:返回删除结果
+deactivate C
+ S -> S: 判断删除结果，删除门店
+ S --> B: 返回删除结果
+deactivate S
+@enduml
+
+
+
+
+
+
+
+
+@startuml
+skinparam dpi 1660
+scale 13 width
+scale 420 height
+participant "前端" as client
+participant "供应商" as supplier
+participant "流程中心" as workflow
+participant "外部接口" as rpc
+
+group 第一步身份校验
+
+ client -> supplier: 发起退出请求
+  note right
+    以下每一步前端向后端发起请求均需先校验当前登录账号是主账号
+  end note
+activate supplier
+ supplier -> supplier: 手机验证码校验
+ supplier -> supplier: 校验当前发起人身份是否是主账号
+ supplier -> supplier: 判断渠道
+ alt 抖音/淘宝渠道
+
+ supplier -> supplier: 冻结供应商申请渠道
+ supplier ->  workflow: 发起退出抖音/淘宝渠道流程
+ activate workflow
+ workflow -> supplier: 返回流程id
+ deactivate
+ supplier -> supplier: 写表入库，插入退出申请记录
+ note right
+ 初始化退出状态：平台审核中
+ end note
+ end
+ alt 甄选
+  supplier -> supplier: 写表入库，插入退出申请记录
+   note right
+   初始化退出状态：退出条件校验中
+   end note
+ end
+ supplier -> client: 拒绝或通过
+deactivate supplier
+end
+group 甄选渠道
+group 第二步退出条件校验 前端一次请求
+    group 有效商品校验
+    client -> supplier: 校验可以退出甄选渠道
+    activate supplier
+    supplier -> rpc:  查询是否有有效商品
+    activate rpc
+    note right
+        接口：
+        负责人：王鼎太
+        参数：
+            供应商id
+            商品状态=有效
+    end note
+    rpc -> supplier: 返回有效商品id
+    deactivate rpc
+    supplier -> supplier: 判断有效商品id是否为空
+    end
+    group 订单校验
+    supplier -> rpc: 查询未完成订单
+        activate rpc
+        note right
+                接口：
+                com.eastbuy.order.b.api.saleorder.feign.IOrderApi
+                queryOrderList
+                负责人：黄荣刚
+                参数：
+                    supplierId:
+                    orderStatusIds：未完成(待支付、待发货、已发货、部分发货、部分退款)
+        end note
+        rpc -> supplier: 返回未完成数量
+        deactivate
+    supplier -> supplier: 判断是否有未完成订单
+    alt 无未完成订单
+    supplier -> rpc : 查询完成时间小于90天的订单
+    note right
+                接口：
+                com.eastbuy.order.b.api.saleorder.feign.IOrderApi
+                queryOrderList
+                负责人：黄荣刚
+                参数：
+                    供应商id
+                    timeType=30
+                    startTime=当前时间-90天
+    end note
+        activate rpc
+        rpc -> supplier: 返回完成时间小于90天的订单
+
+        deactivate
+
+    end
+           supplier -> supplier: 判断是否存在完成时间小于90天的订单
+    end
+    group 售后单校验
+    supplier -> rpc: 查询未完结售后单
+    activate rpc
+     note right
+                    接口：
+                    负责人：
+                    参数：
+                        供应商id
+                        售后单状态=未完成(待商家处理、拒绝售后申请、
+                        待买家退货、待商家收货、退货后商家拒绝、退款中、退款失败)
+     end note
+     rpc -> supplier: 返回未完结售后单
+    deactivate
+     supplier-> supplier: 判断是够存在未完结售后单
+    group 发票校验
+    group 商家给用户开票
+    supplier -> rpc: 查询商家给用户的未完结开票
+    note right
+                        接口：
+                        负责人：王哲
+                        参数：
+                            供应商id
+                            申请单状态=未完结状态(待处理、开票中、开票失败、
+                            红冲中、红冲失败，作废待确认)
+    end note
+    activate rpc
+    rpc -> supplier: 返回商家给用户的未完结开票
+    deactivate
+    supplier -> supplier: 判断是否存在未完结开票
+    end
+    group 商家给平台开票
+        supplier -> rpc: 查询商家给平台的未完结开票
+        note right
+                            接口：
+                            负责人：王哲
+                            参数：
+                                供应商id
+                                申请单状态=未完结状态(待审核，审核驳回，待确认收票)
+        end note
+        activate rpc
+        rpc -> supplier: 返回商家给平台的未完结开票
+        deactivate
+        supplier -> supplier: 判断是否存在未完结开票
+    end
+    group 商家给平台下月是否有待开票
+            supplier -> rpc: 查询商家给平台下月是否有待开票账单
+            note right
+                                接口：
+                                负责人：李世伟
+                                参数：
+                                    供应商id
+                                    结算日期>当前月份1号日期
+            end note
+            activate rpc
+            rpc -> supplier: 返回商家给平台的未完结开票
+            deactivate
+            supplier -> supplier: 判断是否存在未完结开票
+    end
+    end
+    group 未完结佣金/货款/技术服务费
+                supplier -> rpc: 查询供应商是否有未结算账单
+                note right
+                                    接口：
+                                    负责人：李世伟
+                                    参数：
+                                        供应商id
+                end note
+                activate rpc
+                rpc -> supplier: 返回未结算的佣金/货款/技术服务费账单
+                deactivate
+                supplier -> supplier: 判断是否存在未完结账单
+                supplier -> client: 校验结果
+                deactivate
+    end
+alt 校验全部通过或退出渠道不是甄选app
+client -> supplier: 下一步（发起退出流程）
+activate supplier
+supplier -> supplier: 上述检查项，后端再次校验（仅甄选渠道）
+alt 校验失败（有增量数据）
+supplier -> client: 返回退出申请失败
+
+client -> client: 刷新页面重新校验
+end
+supplier -> supplier: 冻结供应商申请渠道
+supplier ->  workflow: 发起退出甄选渠道流程
+activate workflow
+workflow -> supplier: 返回流程id
+deactivate
+supplier -> supplier: 更新退出状态：平台审核中
+supplier -> client: 申请退出成功
+deactivate
+end
+end
+end
+
+group 第三步 平台校验
+workflow -> workflow: 保证金扣减完成人工审核
+workflow -> workflow: 甄选商务审核
+workflow -> workflow: 商务一级部门负责人审核
+workflow -> workflow: 供应商运营审核
+alt 上述任意一步审核驳回
+workflow --> supplier: MQ通知审核驳回
+activate supplier
+supplier -> supplier: 供应商解冻
+supplier -> supplier: 更新退出状态：平台审核驳回
+end
+deactivate
+workflow --> supplier: MQ通知运营审核通过
+supplier -> supplier: 更新退出状态: 合作协议终止确认中
+alt 确认退出协议前 撤销退出申请
+client -> supplier: 撤销退出申请
+activate supplier
+supplier -> workflow: 撤销结束流程
+note right
+                                    接口：ProcessRpcService#cancel
+                                    负责人：王哲
+                                    参数：
+                                        流程实例id
+                                        操作人
+
+end note
+workflow -> supplier: 返回撤销结果
+supplier -> supplier: 供应商解冻
+supplier -> supplier: 更新退出状态: 已撤销
+supplier -> client: 返回撤销结果
+deactivate
+end
+group 第四步终止合作协议签署
+client -> supplier: 确认退出协议
+activate supplier
+supplier -> supplier: 校验供应商下是否有未完结售后单 同上接口
+supplier -> supplier: 校验商家给用户开票是否有未完结开票 同上接口
+alt 校验不通过
+supplier -> client: 校验失败及失败原因
+end
+supplier-> rpc: 确认协议终止
+note right
+                                    接口：
+                                    负责人：李新君
+                                    参数：
+                                        供应商id
+                                        退出渠道类型
+end note
+rpc -> supplier: 返回终止结果
+supplier -> workflow: 终止协议签署节点完成
+note right
+                                    接口：ProcessRpcService#pass
+                                    负责人：王哲
+                                    参数：
+                                        流程实例id
+                                        节点id（taskId）
+                                        是否系统节点
+                                        操作人（系统）
+
+end note
+workflow -> workflow: 流程流转到等待保证金退回+30天公示完成
+
+workflow -> supplier: 返回处理结果
+
+supplier -> rpc: 是否存在该供应商订单
+rpc -> supplier: 返回是否存在该供应商订单
+
+alt 存在该供应商订单
+supplier -> rpc: 创建商家退出公示内容
+rpc -> supplier: 返回创建退出公示内容结果
+supplier -> supplier: 保存公示开始时间及公示内容id
+end
+supplier -> supplier: 更新退出状态: 已确认终止合作协议
+end
+group 第五步退还保证金
+client -> supplier: 发起退还保证金
+supplier -> rpc: 查询保证金余额
+
+note right
+                                    接口：
+                                    负责人：郑保乐
+                                    参数：
+                                        供应商id
+end note
+rpc -> supplier : 返回保证金余额
+alt 保证金余额大于0
+supplier -> rpc: 发起退还保证金
+note right
+                                    接口：
+                                    负责人：郑保乐
+                                    参数：
+                                        供应商id
+end note
+rpc -> supplier: 发起成功
+supplier -> supplier: 更新退出状态: 保证金退回中
+rpc -->supplier: 保证金退还结果
+alt 保证金退还失败
+supplier ->supplier: 更新退出状态: 保证金退回失败
+end
+
+
+end
+supplier ->supplier: 更新退出状态: 等待公示完成
+
+end
+supplier -> supplier:定时任务扫表 \n获取当前时间-30天>退出公示开始时间的退出记录 \n&& 退出状态=等待公示完成 \n&& 退出渠道=甄选
+supplier -> workflow: 保证金退回+30天公示完成节点完成
+workflow -> workflow: 流转到删除退出渠道节点
+workflow -> supplier: 返回处理结果
+supplier -> workflow: 删除退出渠道阶段完成
+workflow -> workflow: 流程结束
+workflow -> supplier: 返回处理结果
+supplier -> supplier: 删除甄选渠道
+note right
+合作渠道删除甄选
+甄选业务审核状态改为-1
+删除品牌对甄选授权文件
+end note
+supplier -> supplier: 判断是否存在其他合作渠道
+alt 有其它合作渠道
+supplier -> supplier: 更新退出状态: 渠道退出完成\n供应商主状态回退到信息待补充
+supplier -> rpc: 发送甄选渠道退出MQ （供应商id 供应商编号 供应商名称 渠道类型）
+end
+
+alt 无其它合作渠道
+supplier -> supplier: 更新退出状态: 选择注销中
+alt 注销供应商
+client -> supplier: 删除并注销
+supplier -> supplier: 注销供应商
+note right
+删除该供应商下所有账号绑定关系
+删除该供应商下所有账号权限
+供应商主状态变更：已注销
+end note
+supplier -> rpc: 供应商所有账号退出登录
+note right
+                                    接口：
+                                    负责人：李新君
+                                    参数：
+                                        供应商id
+end note
+rpc -> supplier: 退出登录完成
+supplier -> client: 注销完成
+supplier --> rpc: 发送供应商注销MQ（供应商id 供应商编号 供应商名称）
+end
+end
+end
+
+
+deactivate
+end
+group 抖音渠道
+group 第二步平台审核
+workflow -> workflow: 抖音商务审核
+workflow -> workflow: 商务一级部门负责人审核
+workflow -> workflow: 供应商运营审核
+alt 上述任意一步审核驳回
+workflow --> supplier: MQ通知审核驳回
+activate supplier
+supplier -> supplier: 供应商解冻
+supplier -> supplier: 更新退出状态：平台审核驳回
+end
+workflow --> supplier: MQ通知运营审核通过
+supplier -> supplier: 更新退出状态:合作协议终止确认中
+end
+deactivate
+group 第三步终止合作协议签署
+client -> supplier: 确认退出协议
+activate supplier
+
+supplier-> rpc: 确认协议终止
+note right
+                                    接口：
+                                    负责人：李新君
+                                    参数：
+                                        供应商id
+                                        退出渠道类型
+end note
+rpc -> supplier: 返回终止结果
+supplier -> workflow: 终止协议签署节点完成
+note right
+                                    接口：ProcessRpcService#pass
+                                    负责人：王哲
+                                    参数：
+                                        流程实例id
+                                        节点id（taskId）
+                                        是否系统节点
+                                        操作人（系统）
+
+end note
+workflow -> workflow: 流程流转到删除退出渠道
+
+workflow -> supplier: 返回处理结果
+
+supplier -> supplier: 更新退出状态: 已确认终止合作协议
+end
+supplier -> workflow: 删除退出渠道节点完成
+
+workflow -> workflow: 流程结束
+workflow -> supplier: 返回处理结果
+supplier -> supplier: 删除抖音\淘宝渠道
+note right
+合作渠道删除
+判断抖音业务审核方式是否改为-1
+删除品牌对渠道授权文件
+end note
+supplier -> rpc: 通知三体渠道退出
+note right
+                                    接口：
+                                    负责人：范星光
+                                    参数：
+                                        供应商id
+                                        渠道类型
+end note
+supplier -> supplier: 判断是否存在其他合作渠道
+alt 有其它合作渠道
+supplier -> supplier: 更新退出状态: 渠道退出完成
+
+end
+
+alt 无其它合作渠道
+supplier -> supplier: 更新退出状态: 选择注销中\n供应商主状态回退到信息待补充
+
+alt 注销供应商
+client -> supplier: 删除并注销
+supplier -> supplier: 注销供应商
+note right
+删除该供应商下所有账号绑定关系
+删除该供应商下所有账号权限（角色置为空）
+供应商主状态变更：已注销
+end note
+supplier -> rpc: 供应商所有账号退出登录
+note right
+                                    接口：
+                                    负责人：李新君
+                                    参数：
+                                        供应商id
+end note
+rpc -> supplier: 退出登录完成
+supplier -> supplier: 更改供应商主状态为已注销
+supplier -> client: 注销完成
+supplier --> rpc: 发送供应商注销MQ（供应商id 供应商编号 供应商名称）
+end
+end
+
+
+
+end
+@enduml
+
+
+
+plantuml
+@startuml
+actor 端 as 端
+participant APP_C as A
+participant 供应商_C as C
+participant 供应商_B as S
+participant 内容中心 as 内容中心
+
+ S -> 内容中心: 发起公示,生成公示内容写入内容中心表
+内容中心 -> 内容中心: 生成内容id
+ C -> 内容中心: 定时任务,每五分钟拉取所有公示内容 （仅查询内容id和名称）
+ 内容中心 -> C: 返回所有公示内容
+ C -> C: 刷新缓存 hash结构 \nkey: supplier-c-service:announce \nfield:id \nvalue:公示名称
+
+ 端 -> A: 获取内容列表
+ A -> C: 查询公式列表
+ C -> C: hgetAll
+ C -> A: 返回所有公示列表(id + 名称)
+ A -> 端: 返回所有公示列表(id + 名称)
+ 端 -> 内容中心:通过id获取内容
+内容中心->端: 返回内容
+
+S -> 内容中心: 公示结束，置为失效
+
+
+@enduml
+

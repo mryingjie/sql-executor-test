@@ -1,0 +1,300 @@
+perf:
+  filter:
+    enable: false
+spring:
+  redis:
+    key:
+      prefix: "eastbuy-supplier-service:"
+  dynamic:
+    tp:
+      receivers: 15638747763
+      executors: # 动态线程池配置，都有默认值，采用默认值的可以不配置该项，减少配置量
+        - threadPoolName: commonExecutor
+          threadPoolAliasName: 供应商通用线程池
+          corePoolSize: 10         #核心线程数 根据业务形态调整
+          maximumPoolSize: 100     #最大线程池数 根据业务形态调整
+          queueCapacity: 200        #队列容量    根据业务形态调整
+          taskWrapperNames: [ "ttl", "mdc" ] # 任务包装器名称，继承TaskWrapper接口
+          waitForTasksToCompleteOnShutdown: true # 参考spring线程池设计，优雅关闭线程池
+          awaitTerminationSeconds: 60  # 优雅关机等待时间，单位（s）
+          queueType: VariableLinkedBlockingQueue   # 任务队列，查看源码QueueTypeEnum枚举类
+          rejectedHandlerType: CallerRunsPolicy    # 拒绝策略，查看RejectedTypeEnum枚举类
+        - threadPoolName: syncThreebodyExecutor
+          threadPoolAliasName: 供应商同步三体线程池
+          corePoolSize: 1         #核心线程数 根据业务形态调整
+          maximumPoolSize: 1     #最大线程池数 根据业务形态调整
+          queueCapacity: 1000        #队列容量    根据业务形态调整
+          taskWrapperNames: [ "ttl", "mdc" ] # 任务包装器名称，继承TaskWrapper接口
+          waitForTasksToCompleteOnShutdown: true # 参考spring线程池设计，优雅关闭线程池
+          awaitTerminationSeconds: 60  # 优雅关机等待时间，单位（s）
+          queueType: VariableLinkedBlockingQueue   # 任务队列，查看源码QueueTypeEnum枚举类
+          rejectedHandlerType: CallerRunsPolicy    # 拒绝策略，查看RejectedTypeEnum枚举类
+          notifyItems:        # 报警项，不配置自动会按默认值配置（变更通知、容量报警、活性报警、拒绝报警、任务超时报警）
+            - type: liveness
+              enabled: false
+              threshold: 80
+        - threadPoolName: dtsHandlerExecutor
+          threadPoolAliasName: dts业务处理线程池
+          corePoolSize: 10         #核心线程数 根据业务形态调整
+          maximumPoolSize: 20     #最大线程池数 根据业务形态调整
+          queueCapacity: 500        #队列容量    根据业务形态调整
+          taskWrapperNames: [ "ttl", "mdc" ] # 任务包装器名称，继承TaskWrapper接口
+          waitForTasksToCompleteOnShutdown: true # 参考spring线程池设计，优雅关闭线程池
+          awaitTerminationSeconds: 60  # 优雅关机等待时间，单位（s）
+          queueType: VariableLinkedBlockingQueue   # 任务队列，查看源码QueueTypeEnum枚举类
+          rejectedHandlerType: CallerRunsPolicy    # 拒绝策略，查看RejectedTypeEnum枚举类
+  datasource:
+    dynamic:
+      primary: master
+      datasource:
+        master:
+          url: jdbc:mysql://rm-2ze71hq0coxls55no.mysql.rds.aliyuncs.com:3306/db_supplier?characterEncoding=UTF-8&useUnicode=true&useSSL=false&tinyInt1isBit=false&allowPublicKeyRetrieval=true&serverTimezone=Asia/Shanghai&zeroDateTimeBehavior=CONVERT_TO_NULL
+          username: supplier_prod
+          password: mH00dttW%4GVttov
+          #url: jdbc:mysql://localhost:3306/dfzx?characterEncoding=UTF-8&useUnicode=true&useSSL=false&tinyInt1isBit=false&allowPublicKeyRetrieval=true&serverTimezone=Asia/Shanghai
+          #username: root
+          #password: zheng
+          driver-class-name: com.mysql.cj.jdbc.Driver
+          p6spy: false
+          hikari:
+            connection-timeout: 2000
+            min-idle: 0
+            max-pool-size:  10
+            idle-timeout: 5000
+
+        bigdata:
+          url: jdbc:lindorm:table:url=http://ld-2ze55fflkqk5f156s-proxy-lindorm.lindorm.rds.aliyuncs.com:30060/db_bigdata
+          username: bigdata_prod
+          password: U4mKNtNgU2J2VhXg
+          driver-class-name: com.aliyun.lindorm.table.client.Driver
+          druid:
+            connectionProperties: database=db_bigdata
+            initialSize: 5
+            maxActive: 10
+            minIdle: 5
+            maxWait: 3000
+            testWhileIdle: true
+            validationQuery: select 1
+            minEvictableIdleTimeMillis: 60000
+            maxEvictableIdleTimeMillis: 100000
+            timeBetweenEvictionRunsMillis: 3000
+        perf:
+          url: jdbc:mysql://rm-2ze71hq0coxls55no.mysql.rds.aliyuncs.com:3306/db_supplier?characterEncoding=UTF-8&useUnicode=true&useSSL=false&tinyInt1isBit=false&allowPublicKeyRetrieval=true&serverTimezone=Asia/Shanghai&zeroDateTimeBehavior=CONVERT_TO_NULL
+          username: supplier_prod
+          password: mH00dttW%4GVttov
+          #url: jdbc:mysql://localhost:3306/dfzx?characterEncoding=UTF-8&useUnicode=true&useSSL=false&tinyInt1isBit=false&allowPublicKeyRetrieval=true&serverTimezone=Asia/Shanghai
+          #username: root
+          #password: zheng
+          driver-class-name: com.mysql.cj.jdbc.Driver
+          p6spy: false
+          hikari:
+            connection-timeout: 2000
+            min-idle: 0
+            max-pool-size: 10
+            idle-timeout: 5000
+
+        bigdata-shadow:
+          url: jdbc:lindorm:table:url=http://ld-2ze55fflkqk5f156s-proxy-lindorm.lindorm.rds.aliyuncs.com:30060/db_bigdata
+          username: bigdata_prod
+          password: U4mKNtNgU2J2VhXg
+          driver-class-name: com.aliyun.lindorm.table.client.Driver
+          druid:
+            connectionProperties: database=db_bigdata
+            initialSize: 5
+            maxActive: 10
+            minIdle: 5
+            maxWait: 3000
+            testWhileIdle: true
+            validationQuery: select 1
+            minEvictableIdleTimeMillis: 60000
+            maxEvictableIdleTimeMillis: 100000
+            timeBetweenEvictionRunsMillis: 3000
+redis:
+  autoRouting: false
+    #jetcache:
+    #localConvertor:  "" # 默认 Fastjson2，可选 jackson
+    #remoteConvertor: kryo  # 默认 Fastjson2，可选 jackson
+  #valueCoder: kryo  # 默认 Java 可选 fastjson、kryo但不支持LocalDateTime等的序列化，需要自己处理
+  ds:
+    #主库数据源，默认master不能变 r-2ze60n9m36s81d5vg4.redis.rds.aliyuncs.com
+    master:
+      host: r-2zeigl7oa2osymiy4w.redis.rds.aliyuncs.com
+      port: 6379
+      database: 0
+      username: supplier_prod
+      password: "&Sw3%eWyQ65GaERB"
+      #压测库数据源
+    perf:
+      host: r-2zeigl7oa2osymiy4w.redis.rds.aliyuncs.com
+      port: 6379
+      database: 0
+      username: supplier_prod
+      password: "&Sw3%eWyQ65GaERB"
+  singleServerConfig:
+    # 如果当前连接池里的连接数量超过了最小空闲连接数，而同时有连接空闲时间超过了该数值，那么这些连接将会自动被关闭，并从连接池里去掉。时间单位是毫秒。
+    idleConnectionTimeout: 10000
+    pingTimeout: 1000
+    # 同任何节点建立连接时的等待超时。时间单位是毫秒。
+    connectTimeout: 5000
+    # 等待节点回复命令的时间。该时间从命令发送成功时开始计时。其它属性可以参照SingleServerConfig 及父类的属性进行配置
+    timeout: 3000
+    #等待超时时间
+    retryAttempts: 3
+    #重试次数
+    connectionMinimumIdleSize: 24
+    #最小连接数
+    connectionPoolSize: 64
+    #最大连接数
+dts:
+  brokerUrl: 'dts-cn-beijing-vpc.aliyuncs.com:18003'
+  topic: cn_beijing_vpc_rm_2ze71hq0coxls55no_supplier_prod_upgrade_from_old_version2
+  sid: dtsr5pu50x1197h2iu
+  userName: supplierSppProd
+  password: hkDywN4nT7XuKHSj
+  initCheckpoint: 1685421043
+feign:
+  httpclient:
+    enabled: true
+  client:
+    config:
+      default:
+        connectTimeout: 10000
+        readTimeout: 10000
+eastbuy:
+  usercenter:
+    config:
+      personInvoiceLimit: 10
+      companyInvoiceLimit: 10
+      addressLimit: 20
+      namePrefix: 东方甄选
+
+aes:
+  aeskey: 81tYGWGWc+Z1VYwzkVr
+threebody:
+  encry:
+    key: 87tYGWGWc7Z1VYw+zkVr
+
+sync:
+  data:
+    limit: 1000
+mq:
+  autoRouting: false
+  testSend: false
+  testReceive: false
+  ds:
+    master:
+      name-server: rmq-cn-20p382qu901-vpc.cn-beijing.rmq.aliyuncs.com:8080
+      access-channel: CLOUD
+      producer:
+        group: eastbuy_supplier_service_dev
+        send-message-timeout: 3000
+        compress-message-body-threshold: 4096
+        max-message-size: 4194304
+        retry-times-when-send-failed: 3
+        retry-times-when-send-async-failed: 3
+    perf:
+      name-server: rmq-cn-20p382qu901-vpc.cn-beijing.rmq.aliyuncs.com:8080
+      access-channel: CLOUD
+      producer:
+        group: eastbuy_goods_b_service_group
+        send-message-timeout: 3000
+        compress-message-body-threshold: 4096
+        max-message-size: 4194304
+        retry-times-when-send-failed: 3
+        retry-times-when-send-async-failed: 3
+rocketmq:
+  name-server: rmq-cn-20p382qu901-vpc.cn-beijing.rmq.aliyuncs.com:8080
+  access-channel: CLOUD
+  producer:
+    group: eastbuy_supplier_contract
+    send-message-timeout: 3000
+    compress-message-body-threshold: 4096
+    max-message-size: 4194304
+    retry-times-when-send-failed: 2
+    retry-times-when-send-async-failed: 2
+    retry-next-server: false
+    enable-msg-trace: true
+    topic:
+      supplierAvailable: eastbuy_topic_supplier_status_change
+  consumer:
+    group: eastbuy_group_supplier_manage
+    topic:
+      marginMessage: topic_supplier_deposit_status
+      contractMessage: eastbuy_topic_supplier_contract
+# 供应商服务业务配置
+supplier:
+  config:
+    localLifeCategoryIds: "[\"1104846433972320\"]"
+    materialCategoryIds: "[\"533753759862789\",\"533760926289934\",\"533794308427797\"]"
+    whitelisting:
+      invoiceTaxpayerNo: 91420100685430643G,91320000134796083Y,913301005966492054,91310000MA1H3LTG36,9137000070620518XA,91330110589872361D,913301006917113109,91310230MA1JYGAT6E,91430100MA4RPNQE8W,91110101596019991T,91120222MA05JCYF7A,91310113MA1GPWJX8P,91110108558591938L,91320691313725889N,91330104MA2H1NHQ5X,91440606MABWJJUTXF,914403006188237549,91310000329561305W,91430100MA4QA50X6U,91440300MA5FL2PX9W,91330101563009295L,91370100MA3EKP811E,91330100MA27W7KX8Q,91310118MA1JMX3H4Y,91330104MA2B21TX93,9111010877256341X4,91340200MA2NE15539,913101175559503333,91330100568758041R,913301005966492000,91310115MA1K45MU82,9131011677666885XE,91370700165840155D,91330901MA2A2Y4763,91440300665870844N,91440300MA5DJPRU73,913101105903796036,91310000052965752F,91440300MA5ER4KW6E,91330108691725472K,91440101321039950F,91110000600062547M,91440101321039950F,91110000600062547M,91320509MA1X8W9L9U,914406057811848686,91654000MABJJYJ28W,913100005708145322,91310117332348935G,91440300665870844N,91440300MA5DJPRU73,913101105903796036,91120222600907490N,91420105758155532J,913205067956157533,91440300335084875L,914406060929611584,913702127180446942,91120118MA06YD134Q,91310000710939418D,91310000717860307J,9131000071785023XC,91350781060376421C,91330108352512085G,91120118MA05NJ4UXK,916101327974771043,91310000MA7GTQ177W,91440101567914858A,91310104698826321Q,91440101MA5CJM8X15,91310112MA1GCHH03H,914401013275805967,91440106583383671E,913702127180446942,914406060929611584,91340200704908535T,913402006789050305,91320214MA1TGB8F94,91370212MA3FADBW87,91330000725252053F,91440300618810099P,91441300598977712N,91330200MA283665X6,913301105898791172,91442000618120215D,1630772053038985217,91440606MA54A3A57P,913301007654812994,91330100MA2B1L2C4H,91510700326942604U,91350200678290910R,91440606786454927J,91340200678905057W,91330602MA2BFQD572,913101185774922656,9144030072302468X5,91310000MA1FL7CQ5M,91320594608243799B,91440700698167047Q,91440700696404352J,91110108558521630L,91330104MA2B21TX93,913101175559503333,91110101670572390G,913100005758422769,9131011677666885XE,9111011658767496X4,911102283063869548,91320115MA1P0K2D53,91350200MA345MUW6X,91310116MA1JBPB638,91370600863128384Y,91310115MA1H7FTP22
+    pdf2png:
+      excludeSupplier: "[\"DS594478410150\",\"DS607461092567\",\"DS484983037220\",\"DS011876598216\",\"DS118487987461\",\"DS313450286474\",\"DS464169065573\",\"DS654204443013\",\"DS068527131449\",\"DS553756695348\",\"DS609988692497\",\"DS694619153499\",\"DS847429713797\",\"DS031324659348\",\"DS365916370945\",\"DS694678439424\",\"DS135216556995\",\"DS493642228236\"]"
+    brandCategoryIds: "[\"533757484142607\",\"533757774008367\",\"533757982609471\",\"533758616997949\",\"533789426978885\",\"1104848244727869\",\"1104849779957826\",\"1104850544844855\",\"1104850921656390\",\"1104851651207231\"]"
+    bookCategoryIdList: "[\"533794312556578\",\"533794407452757\",\"533794568015969\",\"533794690961501\",\"533794847264860\",\"533795026702392\",\"533795263418464\",\"533795339440151\",\"533795356872790\",\"533795376861192\",\"533809935487013\",\"533815465349187\"]"
+    maxPdfSize: 5
+    maxDpi: 200
+    threebody:
+      category:
+        map: "{\"1699677325784330291\":\"1104848244727869\",\"1699677325784330401\":\"1104849779957826\",\"1699677325784330276\":\"1104850544844855\",\"1699677325784330258\":\"1104850921656390\",\"1699677325784330242\":\"1104851651207231\",\"1645627654066974721\":\"585130461958226\",\"1581177000393416707\":\"533753765302329\",\"1581177000397611028\":\"533754000576545\",\"1581177000397611052\":\"533754061787188\",\"1581177000397611086\":\"533754210881559\",\"1581177000405999617\":\"533754514575394\",\"1581177000410193933\":\"533754952421402\",\"1581177000410193978\":\"533755169542156\",\"1581177000426971164\":\"533755922485266\",\"1581177000435359771\":\"533757484142607\",\"1581177000435359785\":\"533757599748195\",\"1581177000439554093\":\"533757774008367\",\"1581177000443748377\":\"533757982609471\",\"1581177000447942662\":\"533758616997949\",\"1581177000452136965\":\"534668926328846\",\"1581177000456331285\":\"533759560061012\",\"1581177000460525600\":\"533760727257182\",\"1581177000460525606\":\"533760892538896\",\"1581177000460525632\":\"533795396522076\",\"1581177000481497089\":\"534669700829211\",\"1581177000481497093\":\"533760932253774\",\"1581177000489885697\":\"533763063418888\",\"1581177000498274333\":\"533767640584241\",\"1581177000506662933\":\"533772233478210\",\"1581177000510857229\":\"533774101057621\",\"1581177000523440140\":\"533779647041607\",\"1581177000531828776\":\"533783784853555\",\"1581177000540217367\":\"533786984976472\",\"1581177000544411708\":\"533789426978885\",\"1581177000548605961\":\"533789868036177\",\"1581177000552800265\":\"533791384342582\",\"1581177000561188877\":\"533792994627667\",\"1581177000561188951\":\"533793827131461\",\"1581177000561188964\":\"533793928515682\",\"1581177000561188997\":\"533794291716191\",\"1581177000586354690\":\"533794312556578\",\"1581177000586354701\":\"533794407452757\",\"1581177000590549010\":\"533794568015969\",\"1581177000590549025\":\"533794690961501\",\"1581177000590549044\":\"533794847264860\",\"1581177000590549079\":\"533795026702392\",\"1581177000590549094\":\"533795263418464\",\"1581177000594743302\":\"533795339440151\",\"1581177000594743305\":\"533795356872790\",\"1581177000594743308\":\"533795376861192\",\"1654446217538490369\":\"533803146285150\",\"1655476929792233508\":\"533809935487013\",\"1655476929796427858\":\"533815465349187\",\"1655494834848063490\":\"534671309213720\"}"
+      host: "https://liveapi.dfzxvip.com"   # http调用三体域名
+    sync:
+      exclude:
+        ids: "[\"591281885483074\",\"545889952469037\",\"1663809361833852929\",\"1091581202812073107458\",\"1091581202390327451649\",\"1091581202102224904194\",\"1091581203973643657217\",\"1581299556919205890\",\"1091581201849711026178\",\"1091581208835051708418\",\"1091581210705015037954\",\"1091581202642342207490\",\"1581299639723155458\",\"1091581202230474137602\",\"1091581206905432793090\",\"1091581213948457738242\",\"1091581217401384951809\",\"1091581217849265315841\",\"1091581219396313374722\",\"1091581222262172246017\",\"1091581244408189607941\",\"1581873237977911297\",\"1581894921762033666\",\"1581933907999637506\",\"1582555874769313794\",\"1582671023980617729\",\"1583707398652370945\",\"1585947891956641793\",\"1588080530679074818\",\"1635886255931174913\",\"1638075925000736770\",\"1640261111896686594\",\"543986232004625\",\"540243383169057\",\"1091581204581951954945\",\"1091581202421264637954\",\"1091581202525941882881\",\"1091581202502827073538\",\"1091581202146281873409\",\"1091581283529494798338\",\"1091581202242616647681\",\"1091581203245172744193\",\"1091581203415524401153\",\"1091581203846115844098\",\"1091581203967490613250\",\"1091581205077148262402\",\"1091581205317116977153\",\"1091581205468564905985\",\"1091581205723826053121\",\"1091581205801122881537\",\"1091581206526938800130\",\"1091581207279711510530\",\"1091581208808308826113\",\"1091581208854001573890\",\"1091581210666154811394\",\"1091581212993314054146\",\"1091581221900342222849\",\"1091581244408197996550\",\"1091581244439571390473\",\"1091581244451722289163\",\"1091581244451743260677\",\"1091581244463768330257\",\"1091581244476242190344\",\"1091581244482269405200\",\"1091581244482273599492\",\"1581893876314984450\",\"1582544909252620289\",\"1582556879221616642\",\"1583079373742481409\",\"1583328734100496386\",\"1583404729725534209\",\"1091584606662970159105\",\"1586200658214318081\",\"1587021622062010370\",\"1589909593724739586\",\"1590594498646249474\",\"1591599867101614081\",\"1594632844672929793\",\"1600465350583197697\",\"1610835742027780098\",\"1610942857863274498\",\"1623597921536962561\",\"1091581203839174270977\",\"1091581201718248955905\",\"1091581201732845133826\",\"1091581201716374102017\",\"1091581204399273238530\",\"1091581204986148642818\",\"1091581202534766698497\",\"1091581208469996265474\",\"1091581244457699172370\",\"1091581209721861791745\",\"1091581202617356738562\",\"1091581244445690880010\",\"1581299620160921601\",\"1091581208844396617729\",\"1091581210699625357314\",\"1091581201816441806850\",\"1091581201941943771137\",\"1091581202219040464898\",\"1091581202775230341121\",\"1091581202779093295105\",\"1091581202931598188546\",\"1091581203328488398849\",\"1091581203760342327297\",\"1091581203772791021569\",\"1091581203818320191490\",\"1091581203978232225793\",\"1091581204794032742401\",\"1091581206521796583425\",\"1091581206589928857602\",\"1091581207236602454017\",\"1091581207345524334594\",\"1091581208026494754818\",\"1091581208281432940546\",\"1091581208982296944641\",\"1091581212710500524034\",\"1091581213722045014017\",\"1091581214466991153153\",\"1091581214523211603969\",\"1091581217611771240449\",\"1091581217630167457793\",\"1091581222296351629314\",\"1091581244396181315596\",\"1091581244396193898512\",\"1091581244402145615885\",\"1091581244402162393090\",\"1091581244402200141828\",\"1091581244408185413646\",\"1091581244420713799699\",\"1091581244420730576915\",\"1091581244439567196162\",\"1091581244457699172380\",\"1091581244470068174855\",\"1091581244476225413123\",\"1091581244476229607443\",\"1091581244488330174476\",\"1091581283502093410306\",\"1581876228035887106\",\"1581884489479790593\",\"1581885489749991426\",\"1581889323965792257\",\"1582203679029895170\",\"1582301345130147842\",\"1582569528512671746\",\"1582619328456761345\",\"1582652877431971842\",\"1582964804433403906\",\"1582994107740659713\",\"1583354097895645186\",\"1585833876752617474\",\"1587355956764205058\",\"1588022106071175170\",\"1588812969910833154\",\"1589546769228578818\",\"1591624104193462273\",\"1592507897975734273\",\"1592723288065105921\",\"1592790243210297346\",\"1595712003796426753\",\"1596079518569521154\",\"1597113952404037634\",\"1597433720766148610\",\"1597919468381638658\",\"1600023601537400833\",\"1600362954834886658\",\"1610882859920363522\",\"1611362007550709762\",\"1614070604710866946\",\"1619566365791682562\",\"1623489928579293185\",\"1625063271528792065\",\"1627914409980256257\",\"1629076974685048833\",\"1640651421789458433\",\"1581299521468948482\",\"1091581201713551335426\",\"1091581202095304302594\",\"1091581203088981057537\",\"1091581203980224520193\",\"1091581202394056187905\",\"1091581202178485739522\",\"1091581202315362656257\",\"1091581202080313860098\",\"1091581202341929377793\",\"1091581244414736916501\",\"1091581202591373025281\",\"1091581208824565948418\",\"1091581201962411974657\",\"1091581202008641593345\",\"1091581202078854242305\",\"1091581203486806597634\",\"1091581205189559803906\",\"1091581206947241615362\",\"1091581208991033679873\",\"1091581216815595872258\",\"1091581244402158198795\",\"1091581244408206385154\",\"1091581244470059786244\",\"1581912487617806338\",\"1581941054841995266\",\"1581979540687605761\",\"1582269589862387713\",\"1582934722478268417\",\"1589275659942350850\",\"1589447878765039617\",\"1591341130003353601\",\"1604763662636752897\",\"1605758686917222402\",\"1630060316309778433\",\"1091581204145131970562\",\"1091581201763878789121\",\"1581299552078979073\",\"1091581202370534531074\",\"1091581244445707657223\",\"1091581201921903386625\",\"1091581202305682202626\",\"1091581202849071063042\",\"1091581206467560038401\",\"1091581217349002289154\",\"1091581217440870129666\",\"1091581244396198092814\",\"1091581244402162393092\",\"1091581244427382743056\",\"1091581244482261016578\",\"1581899435643019265\",\"1582184749750067201\",\"1582195294116315137\",\"1582281064311353346\",\"1582686034308308993\",\"1583001471703556097\",\"1587077808524877825\",\"1590233818180026370\",\"1590537123721646082\",\"1590886411130015745\",\"1599995076264894465\",\"1635603685632184321\",\"1091581244482265210901\",\"1091581202377710985217\",\"1091581202373994831874\",\"1091581208779472986113\",\"1091581201954065309698\",\"1091581203387376427010\",\"1091581205057468588034\",\"1091581208921550839810\",\"1091581244389608841230\",\"1582202297157341185\",\"1582239609337217025\",\"1582274249587331074\",\"1584374092656209921\",\"1587369475921985537\",\"1590321673444392962\",\"1595658377778487298\",\"1611207985696141313\",\"1619168241378066434\",\"1091581217447744593921\",\"1091581244396177121289\",\"1091581244396193898502\",\"1091581244402158198799\",\"1091581244408218968070\",\"1091581244463785107475\",\"1582306737026142209\",\"1620010839783833602\",\"1597989128656334850\",\"1628678266705080322\",\"1091581203964999196673\",\"1091581207810957860866\",\"1601067435776872450\",\"1091581208890680762370\",\"1663139314187972609\",\"538375388725338\",\"1581497686249385985\",\"1091581216287876931586\",\"1091581215540875583489\",\"1091581215214609063937\",\"1091581215045574418433\",\"1091581214895749685250\",\"1091581214843111170049\",\"1091581214841219538945\",\"1091581214601481510914\",\"1091581214487245447170\",\"1091581214056683364354\",\"1091581214053327921153\",\"1091581213961116147713\",\"1091581213703153868802\",\"1091581213464825126913\",\"1091581213437662814210\",\"1091581213399846969345\",\"1091581213379533955073\",\"1091581213210218291201\",\"1091581213163061731329\",\"1091581213145743450114\",\"1091581212603633852418\",\"1091581212560449298433\",\"1091581212503520010242\",\"1091581211691825717250\",\"1091581211099262836737\",\"1091581210643778199553\",\"1091581210324675551233\",\"1091581210254932664322\",\"1091581210229368381441\",\"1091581209752912224258\",\"1091581209740979429378\",\"1091581209687615299585\",\"1091581209629708738562\",\"1091581209047493206017\",\"1091581208935232659457\",\"1091581208927968124929\",\"1091581208821625741313\",\"1091581208750230298626\",\"1091581208721335738369\",\"1091581208053346689026\",\"1091581206923938062337\",\"1091581205708160327681\",\"1091581205239845314561\",\"1091581204745303318529\",\"1091581202709908250626\",\"1091581201977339502593\",\"1595734040842543106\",\"1593546242439766018\",\"1590640893163999234\",\"1590229732178268161\",\"1590177106581651458\",\"1589548403892277249\",\"1589172342440955905\",\"1589129297603432449\",\"1589121636480176130\",\"1587635642522005506\",\"1587378551161085953\",\"1587323869616488449\",\"1587066647728701441\",\"1586975834673958913\",\"1586195910362853378\",\"1585878999058272257\",\"1585574527499755521\",\"1585558229807198210\",\"1585521595379843074\",\"1585519939791585281\",\"1585255329557843969\",\"1585179007294689281\",\"1585170190870687745\",\"1585111326910251009\",\"1584849576804540417\",\"1584834456488620033\",\"1584598570296467458\",\"1584349078180536321\",\"1583931474322989058\",\"1583822477864935425\",\"1583108114953113601\",\"1583029364135534593\",\"1582934752761143298\",\"1582632382272040962\",\"1582373454993592322\",\"1582348919816753154\",\"1582308609917095937\",\"1582246662415908865\",\"1582240951691419649\",\"1582220721489485826\",\"1582199600764747778\",\"1582196956709822465\",\"1582192937227845633\",\"1581889954502713346\",\"1621408193200062466\",\"1611335192282853378\",\"1594577245501382658\",\"1593536403151650818\",\"1593458724245508097\",\"1593166968315645953\",\"1591988045095211009\",\"1591021438987833346\",\"1590949637337882625\",\"1588778498431504386\",\"1588018006410522625\",\"1587294250100842497\",\"1586689150031687681\",\"1585886123834396673\",\"1585472029049950209\",\"1582632467606470658\",\"1582260515778777089\",\"1582245463776100354\",\"1581916806516232194\"]"
+      zxIds: '[]'
+      switch: true
+    selfOperatedNo: "[\"DS342028026613\",\"DS654204443013\"]"
+    role:
+      id:
+        admin: 1649972615934164993
+        init: 1649972509289791489
+        zxMaterialAdmin: 1649972615934164993
+        dyMaterialAdmin: 1701550582279614466
+        dyLocalLifeAdmin: 1701550659862208513
+        zxLocalLifeAdmin: 1701550704409358337
+    permission:
+      appId:
+        o: operate
+        b:
+    licence:
+      expire:
+        remind:
+          expiredMsgTemplateId: 1641272424236482561
+          msgTemplateId: 1641272049899044866
+          days: 0,10,30
+      audit:
+        remind:
+          msg: '当前待资质审核%d个，其中入驻%d个自然日未完成审核数为%d个，请推进相关运营同学尽快完成审核。点击链接查看'
+          days: 3
+          url: https://operate.eastbuy.com/supplier/manage/enterpriseList?supplierStatus=1&licenceAuditStatus=0
+          robots: "[\"c3af1647ebc8d05a0fbda43d48a0062445beea8dd575ab571889b8bf918618ba\"]"
+    modify:
+      audit:
+        remind:
+          days: 3
+          url: https://operate.eastbuy.com/supplier/QualificationUpdate?modifyAuditStatus=0
+          msg: '当前资质更新待审核数量%d个，其中更新%d个自然日未完成审核数为%d个，请推进相关运营同学尽快完成审核。点击链接查看'
+          robots: "[\"c3af1647ebc8d05a0fbda43d48a0062445beea8dd575ab571889b8bf918618ba\"]"
+    licenceExpiringMsg: 资质即将过期提醒：%s，请在30个自然日内完成补办并在系统修改提交
+    foodCategoryIdList: "[\"533753765302329\",\"533754061787188\",\"533760727257182\",\"533754000576545\",\"533757484142607\",\"533754514575394\",\"533757599748195\",\"533754210881559\",\"533755169542156\",\"533754952421402\",\"533760892538896\",\"533757774008367\",\"533757982609471\",\"533759560061012\",\"533755922485266\",\"533758616997949\"]"
+    licenceAuditRejectionTemplateId: 1641269929577709569
+    zxBusinessAuditRejectionTemplateId: 1641270080115474434
+    dyBusinessAuditRejectionTemplateId: 1641270261837889537
+    dyBusinessAuditApprovedTemplateId: 1641285107912441858
+    zxBusinessAuditApprovedTemplateId: 1641270520710332418
+    modifyAuditApprovedTemplateId: 1641270676906213377
+    modifyAuditRejectionTemplateId: 1641285241933037570
+    modifyAuditAddBrandAuthorizedTemplateId: 1641270961108058114
+    supplierDetailMsgUrl: https://l.dfyx.cn/t3Yw
+    submitGoodsMsgUrl: https://l.dfyx.cn/DeJw
+    moveInProcessMsgUrl: https://l.dfyx.cn/dJEj
+    addBrandAuthorizedMsgUrl: https://l.dfyx.cn/t3Yw
+    phoneVerificationTemplateId: 1641268988107456513
+    roleMap: "{\"1\":[\"1649968911856222210\"]}"
+    field:
+      modify: "[{\"supplierStatusMatchStrList\":[\"0_*_*_*\",\"1_2_*_*\",\"2_1_*_2\",\"2_1_2_*\"],\"allowAddBrand\":true,\"allowAddShop\":true,\"allowAddLicence\":true,\"allowDeleteBrand\":true,\"allowDeleteShop\":true,\"allowDeleteLicence\":true,\"needAudit\":false,\"desc\":\"供应商状态为信息待补充可修改字段 或 供应商状态=资质审核中且资质审核状态=驳回可修改字段 或 供应商状态=业务审核中且甄选业务审核状态=驳回 或 供应商状态=业务审核中且抖音业务审核状态=驳回\",\"modifySupplierBaseInfoConfig\":{\"modifyFieldConfigList\":[{\"field\":\"supplierName\"},{\"field\":\"certificateType\"},{\"field\":\"managerIdNoObverse\"},{\"field\":\"invoiceTaxpayerNo\"},{\"field\":\"supplierLicenceValidityEnd\",\"fieldName\":\"营业执照有效期\"},{\"field\":\"managerLicenceType\"},{\"field\":\"legalLicenceType\"},{\"field\":\"managerIdNoReverse\"},{\"field\":\"managerName\"},{\"field\":\"managerIdNo\"},{\"field\":\"legalIdNoObverse\"},{\"field\":\"legalIdNoReverse\"},{\"field\":\"legalName\"},{\"field\":\"legalIdNo\"},{\"field\":\"businessLicence\"},{\"field\":\"supplierType\"},{\"field\":\"registeredDate\"},{\"field\":\"licenceValidityEnd\"},{\"field\":\"manageModelList\"},{\"field\":\"categoryIds\"},{\"field\":\"operatingBrands\"},{\"field\":\"addressDetail\"},{\"field\":\"provinceId\"},{\"field\":\"province\"},{\"field\":\"cityId\"},{\"field\":\"city\"},{\"field\":\"countyId\"},{\"field\":\"county\"},{\"field\":\"town\"},{\"field\":\"licenceFile\"},{\"field\":\"brandName\"},{\"field\":\"ownBrand\"},{\"field\":\"trademarkLicense\"},{\"field\":\"trademarkLicenseEnd\"},{\"field\":\"trademarkAuthorizeEnd\"},{\"field\":\"trademarkAuthorize\"},{\"field\":\"contactName\"},{\"field\":\"contactPhone\"},{\"field\":\"contactWechat\"},{\"field\":\"contactEmail\"},{\"field\":\"dfzxBd\"},{\"field\":\"labelIds\"},{\"field\":\"shopOperationType\"},{\"field\":\"shopType\"},{\"field\":\"homepageImg\"},{\"field\":\"shopName\"},{\"field\":\"shopOperationBrands\"},{\"field\":\"totalScore\"},{\"field\":\"commodityScore\"},{\"field\":\"serviceScore\"},{\"field\":\"logisticsScore\"},{\"field\":\"novicePeriodImg\"},{\"field\":\"dyShopId\"},{\"field\":\"salesImage\"},{\"field\":\"goodRatingImage\"},{\"field\":\"companyOperationTypes\"},{\"field\":\"companyNature\"},{\"field\":\"belongConglomerate\"},{\"field\":\"conglomerateName\"},{\"field\":\"companySize\"},{\"field\":\"citiesInvolvedIds\"},{\"field\":\"companySaleChannels\"},{\"field\":\"contactPositions\"},{\"field\":\"contactLicence\"},{\"field\":\"dyPlatformEntryDate\"},{\"field\":\"dyPlatformMonthsGmv\"},{\"field\":\"dyPlatformOperationLeaderName\"},{\"field\":\"dyPlatformOperationLeaderPhone\"},{\"field\":\"dyPlatformOperationLeaderWechat\"},{\"field\":\"dyPlatformOperationLeaderPositions\"},{\"field\":\"dyPlatformOperationLeaderLicence\"},{\"field\":\"dyPlatformBdName\"},{\"field\":\"dyPlatformBdPhone\"},{\"field\":\"dyPlatformBdWechat\"},{\"field\":\"dyPlatformBdPositions\"},{\"field\":\"dyPlatformBdLicence\"}]}},{\"supplierStatusMatchStrList\":[\"3_1_1_1\",\"3_1_-1_1\",\"3_1_1_-1\",\"3_1_1_2\",\"3_1_-1_2\",\"3_1_2_1\",\"3_1_2_-1\"],\"allowAddBrand\":true,\"allowAddShop\":true,\"allowAddLicence\":true,\"allowDeleteBrand\":true,\"allowDeleteShop\":true,\"allowDeleteLicence\":true,\"desc\":\"供应商状态=业务审核通过且抖音业务审核和甄选业务审核都通过 或 供应商状态=业务审核通过，抖音业务审核=通过，甄选业务审核=驳回 或 供应商状态=业务审核通过，抖音业务审核=驳回，甄选业务审核=通过\",\"needAudit\":true,\"modifySupplierBaseInfoConfig\":{\"modifyFieldConfigList\":[{\"field\":\"supplierName\"},{\"field\":\"certificateType\"},{\"field\":\"managerLicenceType\"},{\"field\":\"legalLicenceType\"},{\"field\":\"managerIdNoObverse\"},{\"field\":\"managerIdNoReverse\"},{\"field\":\"invoiceTaxpayerNo\"},{\"field\":\"managerName\"},{\"field\":\"managerIdNo\"},{\"field\":\"legalIdNoObverse\"},{\"field\":\"legalIdNoReverse\"},{\"field\":\"legalName\"},{\"field\":\"supplierLicenceValidityEnd\",\"fieldName\":\"营业执照有效期\"},{\"field\":\"legalIdNo\"},{\"field\":\"businessLicence\"},{\"field\":\"supplierType\"},{\"field\":\"registeredDate\"},{\"field\":\"manageModelList\"},{\"field\":\"categoryIds\"},{\"field\":\"operatingBrands\"},{\"field\":\"addressDetail\"},{\"field\":\"provinceId\"},{\"field\":\"province\"},{\"field\":\"cityId\"},{\"field\":\"city\"},{\"field\":\"countyId\"},{\"field\":\"county\"},{\"field\":\"town\"},{\"field\":\"licenceFile\"},{\"field\":\"licenceValidityEnd\"},{\"field\":\"brandName\"},{\"field\":\"ownBrand\"},{\"field\":\"trademarkLicense\"},{\"field\":\"trademarkAuthorize\"},{\"field\":\"trademarkLicenseEnd\"},{\"field\":\"trademarkAuthorizeEnd\"},{\"field\":\"contactName\"},{\"field\":\"contactPhone\"},{\"field\":\"contactWechat\"},{\"field\":\"contactEmail\"},{\"field\":\"labelIds\"},{\"field\":\"shopOperationType\"},{\"field\":\"shopType\"},{\"field\":\"homepageImg\"},{\"field\":\"shopName\"},{\"field\":\"shopOperationBrands\"},{\"field\":\"totalScore\"},{\"field\":\"commodityScore\"},{\"field\":\"serviceScore\"},{\"field\":\"logisticsScore\"},{\"field\":\"novicePeriodImg\"},{\"field\":\"dyShopId\"},{\"field\":\"salesImage\"},{\"field\":\"goodRatingImage\"},{\"field\":\"companyOperationTypes\"},{\"field\":\"companyNature\"},{\"field\":\"belongConglomerate\"},{\"field\":\"conglomerateName\"},{\"field\":\"companySize\"},{\"field\":\"citiesInvolvedIds\"},{\"field\":\"companySaleChannels\"},{\"field\":\"contactPositions\"},{\"field\":\"contactLicence\"},{\"field\":\"dyPlatformEntryDate\"},{\"field\":\"dyPlatformMonthsGmv\"},{\"field\":\"dyPlatformOperationLeaderName\"},{\"field\":\"dyPlatformOperationLeaderPhone\"},{\"field\":\"dyPlatformOperationLeaderWechat\"},{\"field\":\"dyPlatformOperationLeaderPositions\"},{\"field\":\"dyPlatformOperationLeaderLicence\"},{\"field\":\"dyPlatformBdName\"},{\"field\":\"dyPlatformBdPhone\"},{\"field\":\"dyPlatformBdWechat\"},{\"field\":\"dyPlatformBdPositions\"},{\"field\":\"dyPlatformBdLicence\"}]}},{\"supplierStatusMatchStrList\":[\"3_1_1_0\",\"3_1_0_1\"],\"allowAddBrand\":false,\"allowAddShop\":false,\"allowAddLicence\":false,\"allowDeleteBrand\":false,\"allowDeleteShop\":false,\"allowDeleteLicence\":false,\"desc\":\"供应商状态=业务审核通过，抖音业务审核通过，甄选业务审核=待审核 或 供应商状态=业务审核通过，抖音业务审核待审核，甄选业务审核=通过\",\"needAudit\":true,\"modifySupplierBaseInfoConfig\":{\"modifyFieldConfigList\":[]}}]"
+content:
+  previewUrl: https://supplier.eastbuy.com/protocol-preview?id=
+  auth:
+    appId: operate
+    authKey: 内容一级分类
